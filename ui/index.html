@@ -1,0 +1,106 @@
+<!doctype HTML>
+
+<head>
+    <title>CrowdPlay</title>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.3.5/angular.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.4.8/socket.io.min.js"></script>
+    <script type="text/javascript" src="js/crowdplay.js"></script>
+    <link href="https://unpkg.com/basscss-basic@1.0.0/index.css">
+    <link rel="stylesheet" href="http://d2v52k3cl9vedd.cloudfront.net/bassdock/1.2.1/bassdock.min.css">
+    <link rel="stylesheet" href="http://d2v52k3cl9vedd.cloudfront.net/vhs/0.1.0/vhs.min.css">
+    <link href="https://unpkg.com/ace-css/css/ace.min.css" rel="stylesheet">
+    <style>
+      /*MY CSS*/
+      html {height: 100%}
+      body {margin: 0; height: 100%; }
+
+      /*THEM*/
+      a { word-wrap: break-word }
+      code {
+        font-size: 87.5%;
+        color: #222;
+        background-color: rgba(127, 219, 255, .25);
+      }
+      .container-narrow { max-width: 48em }
+      .bg-dark { background-color:#102630; }
+      .button-logo {
+        width: 2em;
+        height: 2em;
+        border-radius: 10000px;
+        border-width: 3px;
+      }
+      .button-logo:hover {
+        color: #102630;
+        background-color: #ff4136;
+        opacity: 0.9;
+        box-shadow: 0 0 0 2px rgba(255,65,54,.5);
+      }
+      .button-logo:before,
+      .button-logo:after {
+        border-radius: inherit;
+      }
+      .button-outline { border-width: 2px }
+      .button-transparent:focus { box-shadow: inset 0 0 0 2px }
+      .button-grow { transition: transform, box-shadow, .05s ease }
+      .button-grow:hover { transform: scale(1.0625) }
+      .button-grow:active { transform: scale(.9375) }
+      .icon { top: .03125em }
+    </style>
+</head>
+
+<body ng-app="crowdPlay" ng-controller="loginController" ng-init="connectSocket('testChannel')">
+    <div class="container col-8" align="center">
+        <h1>CrowdPlay myChannel</h1>
+        <div plangular="http://soundcloud.com/mrsjxn/valis"
+            style="background-image:url(https://d262ilb51hltx0.cloudfront.net/max/2000/1*DZwdGMaeu-rvTroJYui6Uw.jpeg)"
+            class="py1 white bg-cover bg-center" height="10vh">
+            <div class="center py4">
+                <h4 class="caps mb0">{{track.user.username}}</h4>
+                <h3 class="h0 h0-responsive caps m0">{{track.title}}</h3>
+            </div>
+            <div class="flex flex-center px2">
+                <button ng-click="playPause()"
+                    title="Play/Pause"
+                    class="flex-none h2 mr2 button button-transparent button-grow rounded">
+                    <svg ng-if="player.playing !== track.src" class="icon geomicon" data-icon="play" viewBox="0 0 32 32" width="32" height="32" style="fill:currentcolor"><path d="M4 4 L28 16 L4 28 z "></path></svg>
+                    <svg ng-if="player.playing === track.src" class="icon geomicon" data-icon="pause" viewBox="0 0 32 32" width="32" height="32" style="fill:currentcolor"><path d="M4 4 H12 V28 H4 z M20 4 H28 V28 H20 z "></path></svg>
+                </button>
+            <div class="flex-auto">
+                <progress
+                    class="progress"
+                    ng-click="seek($event)"
+                    ng-value="currentTime / duration || 0">
+                    {{ currentTime / duration }}
+                </progress>
+            </div>
+            </div>
+        </div>
+        <!-- <section class="header"> -->
+        <div id="introHeaders" align="center">
+            <h2>{{baseName}}</h2>
+            <h4>Create collabarative playlists using tracks from SoundCloud. <br/> Vote to get songs you like to play first.</h4>
+        </div>
+
+        <form id="joinChannelForm">
+            <div class="row" align="center">
+                <div class="six columns">
+                     <label for="joinChannelName">Join existing channel</label>
+                     <input class="u-full-width" type="text" id="joinChannelName" ng-model="joinChannelName">
+                 </div>
+                 <button>Join</button>
+             </div>
+        </form>
+        <!-- </section> -->
+
+        <form id="createChannelForm">
+             <div class="row" align="center">
+                 <div class="six columns">
+                     <label for="createChannelName">Create a new channel</label>
+                     <input class="u-full-width" type="text" id="createChannelName" ng-model="createChannelName">
+                 </div>
+                  <button>Create</button>
+             </div>
+        </form>
+    </div>
+
+</body>
