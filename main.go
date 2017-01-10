@@ -45,64 +45,94 @@ func main() {
         return
     }
 
-    // Setyp socket server
+    // Setup socket server
     io.On("connection", func(so socketio.Socket) {
 		log.Println("established a new connection")
 
         // ALL USER ACTION
-        so.On("joinChannel", func(channel string) {
+        so.On("joinChannel", func(channel string) string {
+            existence, err := channelViews.ChannelExists(channel)
+            if err != nil {
+                fmt.Println(err)
+                return fmt.Sprintf("error: %s", err)
+            }
+            if !existence {
+                errMsg := fmt.Sprintf("error: channel %s does not exist, create it!", channel)
+                fmt.Println(errMsg)
+                return errMsg
+            }
             so.Join(channel)
-            fmt.Printf("joined %s", channel)
+            msg := fmt.Sprintf("joined %s", channel)
+            fmt.Printf(msg)
+            return fmt.Sprintf("success: %s", msg)
         })
-        so.On("upvote", func(jsonMsg string) {
+        so.On("createChannel", func(channel string) string {
+            existence, err := channelViews.ChannelExists(channel)
+            if err != nil {
+                fmt.Println(err)
+                return fmt.Sprintf("error: %s", err)
+            }
+            if existence {
+                errMsg := fmt.Sprintf("error: channel %s already exists, cannot be created", channel)
+                fmt.Println(errMsg)
+                return errMsg
+            }
+            so.Join(channel)
+            return fmt.Sprintf("success: channel %s created", channel)
+        })
+        so.On("upvote", func(jsonMsg string) string {
             // unmarshall the JSON
             songData, err := viewHelpers.JsonStringUnmarshal(jsonMsg)
             if err != nil {
                 fmt.Println(err)
-                return
+                return fmt.Sprintf("error: %s", err)
             }
             channel := songData["channel"]
             songIDstr := songData["songID"]
             songID, err := strconv.ParseInt(songIDstr, 10, 64)
             if err != nil {
                 fmt.Println(err)
-                return
+                return fmt.Sprintf("error: %s", err)
             }
-            log.Println("Upvote for channel: %v, songID: %v", channel, songID)
+            msg := fmt.Sprintf("Upvote for channel: %v, songID: %v", channel, songID)
+            log.Println(msg)
 
             // should we check the room from what we know about user, or from request?
 
             votingViews.UpVote(channel, songID)
+            return fmt.Sprintf("sucess: %s", msg)
             // publish via redis PUBSUB channel
         })
-        so.On("downvote", func(jsonMsg string) {
+        so.On("downvote", func(jsonMsg string) string {
             // unmarshall the JSON
             songData, err := viewHelpers.JsonStringUnmarshal(jsonMsg)
             if err != nil {
                 fmt.Println(err)
-                return
+                return fmt.Sprintf("error: %s", err)
             }
             channel := songData["channel"]
             songIDstr := songData["songID"]
             songID, err := strconv.ParseInt(songIDstr, 10, 64)
             if err != nil {
                 fmt.Println(err)
-                return
+                return fmt.Sprintf("error: %s", err)
             }
             log.Println("Downvote for channel: %v, songID: %v", channel, songID)
 
             votingViews.DownVote(channel, songID)
+            return "success: downvote successful"
             // publish via redis PUBSUB channel
         })
-        so.On("addSong", func(jsonMsg string) {
+        so.On("addSong", func(jsonMsg string) string {
             // unmarshall the JSON
             jsonMap, err := viewHelpers.JsonStringUnmarshal(jsonMsg)
             if err != nil {
                 fmt.Println(err)
-                return
+                return fmt.Sprintf("error: %s", err)
             }
             channel := jsonMap["channel"]
             votingViews.AddSong(channel, jsonMsg)
+            return fmt.Sprintf("song added successfully to channel %s", channel)
             // publish via redis PUBSUB channel
         })
 
